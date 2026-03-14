@@ -11,21 +11,27 @@ import {
 type Step = "scan" | "configure" | "prove" | "verify";
 
 export function App() {
-  const { isReady, parseQR } = useAnonCitizen();
+  const { isReady } = useAnonCitizen();
   const { status: proofStatus, proof, error: proofError, generate, reset: resetProof } = useProofGeneration();
   const { status: verifyStatus, result: verifyResult, verifyOffChain, reset: resetVerify } = useVerification();
 
   const [step, setStep] = useState<Step>("scan");
   const [qrData, setQrData] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
   const [revealAge, setRevealAge] = useState(true);
   const [revealGender, setRevealGender] = useState(false);
   const [revealState, setRevealState] = useState(false);
   const [revealPinCode, setRevealPinCode] = useState(false);
   const [nullifierSeed, setNullifierSeed] = useState("42");
 
-  const handleScan = async (data: string) => {
+  const handleScan = (data: string) => {
+    setScanError(null);
     setQrData(data);
     setStep("configure");
+  };
+
+  const handleScanError = (err: Error) => {
+    setScanError(err.message);
   };
 
   const handleGenerate = async () => {
@@ -49,6 +55,7 @@ export function App() {
   const handleReset = () => {
     setStep("scan");
     setQrData(null);
+    setScanError(null);
     resetProof();
     resetVerify();
   };
@@ -66,15 +73,20 @@ export function App() {
         </div>
       )}
 
-      {/* Step 1: Scan QR */}
+      {/* Step 1: Upload QR */}
       {step === "scan" && (
         <section>
-          <h2 style={{ fontSize: 18, marginBottom: 12 }}>Step 1: Scan Aadhaar QR Code</h2>
+          <h2 style={{ fontSize: 18, marginBottom: 12 }}>Step 1: Upload Aadhaar QR Code</h2>
           <QRScanner
             onScan={handleScan}
-            onError={(err: Error) => console.error("Scan error:", err)}
-            useCamera={true}
+            onError={handleScanError}
+            useCamera={false}
           />
+          {scanError && (
+            <p style={{ marginTop: 12, fontSize: 13, color: "#F44336" }}>
+              {scanError}
+            </p>
+          )}
         </section>
       )}
 

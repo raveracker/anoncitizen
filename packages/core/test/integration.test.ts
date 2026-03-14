@@ -25,7 +25,7 @@ describe("UIDAI Certificate Parsing", () => {
     const key = parseRSAPublicKeyFromCert(secureQrCert);
 
     expect(key.modulus).toHaveLength(256);
-    expect(key.modulusLimbs).toHaveLength(32);
+    expect(key.modulusLimbs).toHaveLength(17);
     expect(key.exponent).toBe(65537);
     for (const limb of key.modulusLimbs) {
       expect(limb).toBeGreaterThanOrEqual(0n);
@@ -36,7 +36,7 @@ describe("UIDAI Certificate Parsing", () => {
     const key = parseRSAPublicKeyFromCert(offlineEkycCert);
 
     expect(key.modulus).toHaveLength(256);
-    expect(key.modulusLimbs).toHaveLength(32);
+    expect(key.modulusLimbs).toHaveLength(17);
     expect(key.exponent).toBe(65537);
   });
 
@@ -50,7 +50,7 @@ describe("UIDAI Certificate Parsing", () => {
 
   it("should produce limbs consistent with direct bytesToLimbs", () => {
     const key = parseRSAPublicKeyFromCert(offlineEkycCert);
-    const directLimbs = bytesToLimbs(key.modulus, 64, 32);
+    const directLimbs = bytesToLimbs(key.modulus, 121, 17);
     expect(key.modulusLimbs).toEqual(directLimbs);
   });
 
@@ -59,7 +59,7 @@ describe("UIDAI Certificate Parsing", () => {
 
     let reconstructed = 0n;
     for (let i = key.modulusLimbs.length - 1; i >= 0; i--) {
-      reconstructed = (reconstructed << 64n) | key.modulusLimbs[i];
+      reconstructed = (reconstructed << 121n) | key.modulusLimbs[i];
     }
 
     let fromBytes = 0n;

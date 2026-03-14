@@ -1,10 +1,10 @@
 pragma circom 2.1.0;
 
-include "lib/sha256_hasher.circom";
-include "lib/rsa_verifier.circom";
 include "lib/field_extractor.circom";
 include "lib/nullifier.circom";
 include "lib/timestamp_converter.circom";
+include "@zk-email/circuits/lib/rsa.circom";
+include "@zk-email/circuits/lib/sha.circom";
 
 /// @title AadhaarVerifier
 /// @notice Main circuit for privacy-preserving Aadhaar identity verification
@@ -23,16 +23,14 @@ include "lib/timestamp_converter.circom";
 ///      5. IST timestamp → UNIX UTC conversion
 ///      6. SignalHash constraint binding
 ///
-///      Estimated constraint count (maxDataBytes=512, n=64, k=32):
-///        SHA-256:       ~230,000  (512 bytes = 8 blocks × ~28,000)
+///      Estimated constraint count (maxDataBytes=4096, n=64, k=32):
+///        SHA-256:       ~1,800,000  (4096 bytes = 64 blocks × ~28,000)
 ///        RSA:           ~200,000
-///        Field extract: ~100,000  (ByteSelector × field count)
-///        Nullifier:     ~10,000   (Poseidon chain)
-///        Timestamp:     ~500
+///        Field extract: ~800,000    (ByteSelector × field count)
+///        Nullifier:     ~1,100,000  (256 ByteSelectors × 4096 + Poseidon)
+///        Timestamp:     ~40,000
 ///        Signal bind:   ~1
-///        Total:         ~540,000
-///
-///      For production (maxDataBytes=16384): ~5,000,000+ constraints
+///        Total:         ~4,000,000
 template AadhaarVerifier(maxDataBytes, n, k, maxPhotoBytes) {
     // ================================================================
     // PRIVATE INPUTS
@@ -82,30 +80,49 @@ template AadhaarVerifier(maxDataBytes, n, k, maxPhotoBytes) {
     signal output out_pinCode;                // 6-digit pincode or 0 if not revealed
 
     // ================================================================
-    // STAGE 1 — SHA-256 hash of signed data
+    // STAGE 1 — SHA-256 hash of signed data (using @zk-email/circuits)
     // ================================================================
     // Compute SHA-256(signedData[0..signedDataLength-1])
-    // Output: 256-bit hash packed into 4 × 64-bit chunks for RSA comparison
+    // Output: 256-bit hash (big-endian bit order)
 
-    component sha256 = Sha256HashChunks(maxDataBytes);
+    component sha256 = Sha256Bytes(maxDataBytes);
     for (var i = 0; i < maxDataBytes; i++) {
-        sha256.data[i] <== signedData[i];
+        sha256.paddedIn[i] <== signedData[i];
     }
-    sha256.dataLength <== signedDataLength;
+    sha256.paddedInLength <== signedDataLength;
 
     // ================================================================
-    // STAGE 2 — RSA signature verification
+    // STAGE 2 — RSA signature verification (using @zk-email/circuits)
     // ================================================================
     // Verify: signature^65537 mod pubKey == PKCS1v15(SHA-256(signedData))
     // If this passes, the signed data is authentic (signed by UIDAI).
+    //
+    // Sha256Bytes outputs 256 bits in big-endian order.
+    // RSAVerifier65537 expects the hash as k limbs of n bits (LE limb order).
+    // Pack bits into limbs matching zk-email's convention.
 
-    component rsa = RSAVerifier(n, k);
-    for (var i = 0; i < 4; i++) {
-        rsa.hashChunks[i] <== sha256.hashChunks[i];
-    }
+    signal hashLimbs[k];
+    component hashPack[k];
     for (var i = 0; i < k; i++) {
+        hashPack[i] = Bits2Num(n);
+        for (var j = 0; j < n; j++) {
+            var bitIdx = i * n + j;
+            if (bitIdx < 256) {
+                // sha256.out is big-endian bits: out[0]=MSB, out[255]=LSB
+                // LE limb bit position bitIdx corresponds to big-endian bit (255 - bitIdx)
+                hashPack[i].in[j] <== sha256.out[255 - bitIdx];
+            } else {
+                hashPack[i].in[j] <== 0;
+            }
+        }
+        hashLimbs[i] <== hashPack[i].out;
+    }
+
+    component rsa = RSAVerifier65537(n, k);
+    for (var i = 0; i < k; i++) {
+        rsa.message[i] <== hashLimbs[i];
         rsa.signature[i] <== signature[i];
-        rsa.pubkey[i] <== pubKey[i];
+        rsa.modulus[i] <== pubKey[i];
     }
 
     // ================================================================
@@ -211,10 +228,10 @@ template AadhaarVerifier(maxDataBytes, n, k, maxPhotoBytes) {
 // MAIN COMPONENT
 // ================================================================
 // Default instantiation for Aadhaar V2 QR codes:
-//   maxDataBytes  = 512   (for testing; production: 16384)
-//   n             = 64    (bits per RSA limb)
-//   k             = 32    (limbs for 2048-bit RSA)
-//   maxPhotoBytes = 256   (for testing; production: 8192)
+//   maxDataBytes  = 2048  (supports real Aadhaar QR payloads up to ~2 KB signed data)
+//   n             = 121   (bits per RSA limb, recommended by @zk-email/circuits)
+//   k             = 17    (limbs for 2048-bit RSA: 121 * 17 = 2057 >= 2048)
+//   maxPhotoBytes = 256   (first 256 bytes of photo for nullifier uniqueness)
 
 component main {public [
     pubKey,
@@ -224,4 +241,4 @@ component main {public [
     revealGender,
     revealState,
     revealPinCode
-]} = AadhaarVerifier(512, 64, 32, 256);
+]} = AadhaarVerifier(2048, 121, 17, 256);

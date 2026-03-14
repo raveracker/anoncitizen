@@ -20,13 +20,17 @@ const {
   mockVerify,
   mockFormatForContract,
   mockSetPublicKey,
+  mockJsQR,
 } = vi.hoisted(() => ({
   mockParseQR: vi.fn(),
   mockProve: vi.fn(),
   mockVerify: vi.fn(),
   mockFormatForContract: vi.fn(),
   mockSetPublicKey: vi.fn(),
+  mockJsQR: vi.fn(),
 }));
+
+vi.mock("jsqr", () => ({ default: mockJsQR }));
 
 vi.mock("@anoncitizen/core", () => ({
   AnonCitizen: class MockAnonCitizen {
@@ -529,10 +533,35 @@ describe("QRScanner (components.tsx)", () => {
     expect(onError).toHaveBeenCalledWith(expect.any(Error));
   });
 
-  it("calls onScan with data when file is uploaded", async () => {
+  it("calls onScan with decoded QR data when file is uploaded", async () => {
     const onScan = vi.fn();
+    const onError = vi.fn();
+
+    // Mock createImageBitmap (not available in jsdom)
+    const fakeBitmap = { width: 100, height: 100, close: vi.fn() };
+    globalThis.createImageBitmap = vi.fn().mockResolvedValue(fakeBitmap);
+
+    // Mock canvas getContext → returns fake image data
+    const fakeImageData = { data: new Uint8ClampedArray(100 * 100 * 4), width: 100, height: 100 };
+    const fakeCtx = {
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue(fakeImageData),
+    };
+    const origCreateElement = document.createElement.bind(document);
+    vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
+      if (tag === "canvas") {
+        const canvas = origCreateElement("canvas");
+        vi.spyOn(canvas, "getContext").mockReturnValue(fakeCtx as any);
+        return canvas;
+      }
+      return origCreateElement(tag);
+    });
+
+    // Mock jsqr to return decoded QR data
+    mockJsQR.mockReturnValue({ data: "1234567890" });
+
     const { container } = render(
-      <QRScanner onScan={onScan} useCamera={false} />,
+      <QRScanner onScan={onScan} onError={onError} useCamera={false} />,
     );
 
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
@@ -540,25 +569,12 @@ describe("QRScanner (components.tsx)", () => {
 
     const file = new File(["qr-data"], "qr.png", { type: "image/png" });
 
-    const mockFileReader = {
-      readAsDataURL: vi.fn(),
-      onload: null as any,
-      result: "data:image/png;base64,cXItZGF0YQ==",
-    };
-
-    vi.spyOn(globalThis, "FileReader").mockImplementation(
-      () => mockFileReader as any,
-    );
-
     await act(async () => {
       fireEvent.change(fileInput, { target: { files: [file] } });
     });
 
-    await act(async () => {
-      mockFileReader.onload?.();
-    });
-
-    expect(onScan).toHaveBeenCalledWith("data:image/png;base64,cXItZGF0YQ==");
+    expect(onScan).toHaveBeenCalledWith("1234567890");
+    expect(onError).not.toHaveBeenCalled();
 
     vi.restoreAllMocks();
   });
