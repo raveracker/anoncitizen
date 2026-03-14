@@ -5,7 +5,7 @@
   "description": "Circom 2.x circuits for AnonCitizen Aadhaar ZK verification",
   "scripts": {
     "build": "bash scripts/compile.sh",
-    "test": "npx mocha --require ts-node/register --timeout 120000 test/**/*.test.ts",
+    "test": "tsx node_modules/mocha/bin/mocha.js --timeout 120000 test/**/*.test.ts",
     "setup": "bash scripts/setup.sh",
     "clean": "rm -rf build/ artifacts/"
   },
@@ -18,7 +18,7 @@
     "snarkjs": "^0.7.5",
     "mocha": "^10.8.0",
     "@types/mocha": "^10.0.10",
-    "ts-node": "^10.9.0",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "chai": "^4.5.0",
     "@types/chai": "^4.3.0"

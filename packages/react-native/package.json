@@ -13,7 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --external react-native --external expo",
     "test": "vitest run",
@@ -25,19 +27,21 @@
     "@anoncitizen/core": "workspace:*"
   },
   "peerDependencies": {
-    "react-native": ">=0.79.0",
     "expo": ">=53.0.0",
-    "expo-camera": ">=17.0.0"
+    "expo-camera": ">=17.0.0",
+    "react-native": ">=0.79.0"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.0.0",
+    "expo-camera": "^17.0.0",
+    "expo-image-picker": "^17.0.0",
+    "jsdom": "^28.1.0",
+    "react": "^19.0.0",
+    "react-native": "^0.79.0",
     "tsup": "^8.3.0",
     "typescript": "^5.7.0",
-    "vitest": "^2.1.0",
-    "react": "^19.0.0",
-    "@types/react": "^19.0.0",
-    "react-native": "^0.79.0",
-    "expo-camera": "^17.0.0",
-    "expo-image-picker": "^17.0.0"
+    "vitest": "^2.1.0"
   },
   "publishConfig": {
     "access": "public"
@@ -52,5 +56,13 @@
   "bugs": {
     "url": "https://github.com/anoncitizen/anoncitizen/issues"
   },
-  "keywords": ["aadhaar", "zero-knowledge", "react-native", "expo", "zk-proof", "privacy", "mobile"]
+  "keywords": [
+    "aadhaar",
+    "zero-knowledge",
+    "react-native",
+    "expo",
+    "zk-proof",
+    "privacy",
+    "mobile"
+  ]
 }

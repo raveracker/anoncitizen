@@ -5,26 +5,27 @@
  * Uses vitest with mocked React Native primitives.
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { renderHook, act, cleanup } from "@testing-library/react";
 import { createElement, type ReactNode } from "react";
-import { AnonCitizenProvider, useAnonCitizenContext } from "../src/context.js";
-import {
-  useAnonCitizen,
-  useProofGeneration,
-  useVerification,
-} from "../src/hooks.js";
 
 // ============================================================
-// Mocks
+// Mocks — use vi.hoisted so fns are available in vi.mock
 // ============================================================
 
-// Mock @anoncitizen/core
-const mockProve = vi.fn();
-const mockVerify = vi.fn();
-const mockParseQR = vi.fn();
-const mockFormatForContract = vi.fn();
-const mockSetPublicKey = vi.fn();
+const {
+  mockProve,
+  mockVerify,
+  mockParseQR,
+  mockFormatForContract,
+  mockSetPublicKey,
+} = vi.hoisted(() => ({
+  mockProve: vi.fn(),
+  mockVerify: vi.fn(),
+  mockParseQR: vi.fn(),
+  mockFormatForContract: vi.fn(),
+  mockSetPublicKey: vi.fn(),
+}));
 
 vi.mock("@anoncitizen/core", () => ({
   AnonCitizen: vi.fn().mockImplementation(() => ({
@@ -35,6 +36,13 @@ vi.mock("@anoncitizen/core", () => ({
     setPublicKey: mockSetPublicKey,
   })),
 }));
+
+import { AnonCitizenProvider, useAnonCitizenContext } from "../src/context.js";
+import {
+  useAnonCitizen,
+  useProofGeneration,
+  useVerification,
+} from "../src/hooks.js";
 
 // Mock react-native primitives (required for component tests)
 vi.mock("react-native", () => ({
@@ -56,6 +64,10 @@ vi.mock("react-native", () => ({
 // ============================================================
 // Test Helpers
 // ============================================================
+
+afterEach(() => {
+  cleanup();
+});
 
 const testConfig = {
   wasmUrl: "/test.wasm",

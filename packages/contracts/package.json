@@ -15,11 +15,12 @@
     "typecheck": "npx hardhat compile && npx tsc --noEmit"
   },
   "devDependencies": {
-    "hardhat": "^2.23.0",
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@openzeppelin/contracts": "^5.3.0",
-    "ethers": "^6.14.0",
     "chai": "^4.5.0",
+    "dotenv": "^17.3.1",
+    "ethers": "^6.14.0",
+    "hardhat": "^2.23.0",
     "typescript": "^5.8.0"
   },
   "publishConfig": {
@@ -35,5 +36,12 @@
   "bugs": {
     "url": "https://github.com/anoncitizen/anoncitizen/issues"
   },
-  "keywords": ["aadhaar", "zero-knowledge", "solidity", "groth16", "verifier", "ethereum"]
+  "keywords": [
+    "aadhaar",
+    "zero-knowledge",
+    "solidity",
+    "groth16",
+    "verifier",
+    "ethereum"
+  ]
 }
