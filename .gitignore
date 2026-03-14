@@ -26,3 +26,6 @@ packages/contracts/typechain-types/
 Thumbs.db
 
 .claude
+docs/phase-outputs/
+docs/decisions/
+docs/ORCHESTRATION_GUIDE.md

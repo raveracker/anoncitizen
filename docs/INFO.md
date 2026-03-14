@@ -1,4 +1,4 @@
-# AnonCitizen Project Plan
+# AnonCitizen
 
 ## Overview
 

@@ -29,12 +29,12 @@ async function main() {
   console.log("\n=== Deployment Complete ===");
   console.log("Groth16Verifier:", verifierAddress);
   console.log("AnonCitizen:    ", anoncitizenAddress);
-  console.log("\nVerify on Etherscan:");
+  console.log("\nVerify on Polygonscan:");
   console.log(
-    `  npx hardhat verify --network <network> ${verifierAddress}`
+    `  npx hardhat verify --network amoy ${verifierAddress}`
   );
   console.log(
-    `  npx hardhat verify --network <network> ${anoncitizenAddress} ${verifierAddress}`
+    `  npx hardhat verify --network amoy ${anoncitizenAddress} ${verifierAddress}`
   );
 }
 

@@ -1,8 +1,15 @@
 import { expect } from "chai";
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { createRequire } from "module";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // circom_tester provides utilities for testing circom circuits
 // It compiles the circuit, generates witnesses, and checks constraints
+const require = createRequire(import.meta.url);
 const circom_tester = require("circom_tester");
 const wasm_tester = circom_tester.wasm;
 
@@ -316,8 +323,8 @@ describe("Sub-circuit Tests", function () {
       );
     });
 
-    it("should parse '2000' to 2000", async function () {
-      const digits = "2000".split("").map((c) => c.charCodeAt(0).toString());
+    it("should parse '002000' to 2000", async function () {
+      const digits = "002000".split("").map((c) => c.charCodeAt(0).toString());
       const witness = await circuit.calculateWitness({ digits });
       await circuit.checkConstraints(witness);
       await circuit.assertOut(witness, { value: "2000" });
@@ -354,7 +361,6 @@ describe("AadhaarVerifier Integration", function () {
 
   it("should be structured correctly", function () {
     // Verify all circuit files exist
-    const fs = require("fs");
     const circuitDir = path.join(__dirname, "..");
 
     expect(fs.existsSync(path.join(circuitDir, "aadhaar-verifier.circom"))).to
