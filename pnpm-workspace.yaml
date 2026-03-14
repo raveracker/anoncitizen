@@ -1,0 +1,23 @@
+packages:
+  - "packages/*"
+  - "examples/*"
+allowBuilds:
+  '1': true
+  '2': true
+  '5': true
+  '6': true
+  ',': true
+  '-': true
+  a: true
+  b: true
+  c: true
+  d: true
+  e: true
+  h: true
+  i: true
+  k: true
+  l: true
+  p: true
+  r: true
+  s: true
+  u: true

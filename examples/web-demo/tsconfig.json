@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "paths": {
+      "@anoncitizen/react": ["../../packages/react/src/index.ts"],
+      "@anoncitizen/core": ["../../packages/core/src/index.ts"]
+    }
+  },
+  "include": ["src", "../../packages/core/src/circomlibjs.d.ts"]
+}

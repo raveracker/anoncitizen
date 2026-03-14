@@ -1,0 +1,51 @@
+{
+  "name": "@anoncitizen/react",
+  "version": "0.1.0",
+  "description": "React hooks and components for AnonCitizen ZK Aadhaar verification",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "npx eslint src/",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@anoncitizen/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=19.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "react": "^19.0.0",
+    "@types/react": "^19.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anoncitizen/anoncitizen.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://github.com/anoncitizen/anoncitizen/tree/main/packages/react",
+  "bugs": {
+    "url": "https://github.com/anoncitizen/anoncitizen/issues"
+  },
+  "keywords": ["aadhaar", "zero-knowledge", "react", "hooks", "zk-proof", "privacy"]
+}
