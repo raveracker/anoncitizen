@@ -1,0 +1,28 @@
+node_modules/
+dist/
+build/
+artifacts/
+.turbo/
+*.tsbuildinfo
+.env
+.env.local
+
+# Circuit build artifacts
+packages/circuits/build/
+packages/circuits/artifacts/
+*.ptau
+*.zkey
+*.wtns
+*.r1cs
+*.wasm
+*.sym
+
+# Hardhat
+packages/contracts/cache/
+packages/contracts/typechain-types/
+
+# OS
+.DS_Store
+Thumbs.db
+
+.claude

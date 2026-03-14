@@ -1,0 +1,173 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm turbo lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build upstream packages
+        run: pnpm turbo build --filter=@anoncitizen/core
+
+      - name: Typecheck all packages
+        run: pnpm turbo typecheck
+
+  test-core:
+    name: Core SDK Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build & test core
+        run: pnpm turbo test --filter=@anoncitizen/core
+
+  test-react:
+    name: React SDK Tests
+    runs-on: ubuntu-latest
+    needs: [test-core]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build & test react
+        run: pnpm turbo test --filter=@anoncitizen/react
+
+  test-react-native:
+    name: React Native SDK Tests
+    runs-on: ubuntu-latest
+    needs: [test-core]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build & test react-native
+        run: pnpm turbo test --filter=@anoncitizen/react-native
+
+  test-contracts:
+    name: Contract Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build & test contracts
+        run: pnpm turbo test --filter=@anoncitizen/contracts
+
+  test-circuits:
+    name: Circuit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install circom
+        run: |
+          curl -L https://github.com/iden3/circom/releases/latest/download/circom-linux-amd64 -o /usr/local/bin/circom
+          chmod +x /usr/local/bin/circom
+
+      - name: Run circuit tests
+        run: pnpm --filter @anoncitizen/circuits test
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [test-core, test-react]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build packages
+        run: pnpm turbo build --filter=@anoncitizen/core --filter=@anoncitizen/react
+
+      - name: Run E2E tests
+        run: npx playwright test --config=tests/e2e/playwright.config.ts --project=chromium

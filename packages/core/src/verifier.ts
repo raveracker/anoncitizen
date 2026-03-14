@@ -1,0 +1,102 @@
+/**
+ * @module @anoncitizen/core/verifier
+ * Off-chain proof verification using snarkjs.
+ */
+
+import type {
+  AnonCitizenProof,
+  ContractCalldata,
+  Gender,
+  VerificationKey,
+  VerificationResult,
+} from "./types.js";
+import { PUBLIC_SIGNAL_INDEX } from "./types.js";
+
+/**
+ * Verify an AnonCitizen proof off-chain using snarkjs.
+ *
+ * @param proof - The proof to verify
+ * @param verificationKey - The circuit verification key
+ * @returns Verification result with decoded public signals
+ */
+export async function verifyProofOffChain(
+  proof: AnonCitizenProof,
+  verificationKey: VerificationKey
+): Promise<VerificationResult> {
+  const snarkjs = await import("snarkjs");
+
+  const valid = await snarkjs.groth16.verify(
+    verificationKey,
+    proof.publicSignals,
+    proof.proof
+  );
+
+  return {
+    valid,
+    ...decodePublicSignals(proof.publicSignals),
+  };
+}
+
+/**
+ * Decode the public signals array into named, typed fields.
+ *
+ * @param publicSignals - Raw public signals from proof generation
+ * @returns Decoded fields with proper types
+ */
+export function decodePublicSignals(publicSignals: string[]): Omit<
+  VerificationResult,
+  "valid"
+> {
+  const nullifier = BigInt(publicSignals[PUBLIC_SIGNAL_INDEX.nullifier]);
+  const timestamp = Number(publicSignals[PUBLIC_SIGNAL_INDEX.timestamp]);
+  const pubKeyHash = BigInt(publicSignals[PUBLIC_SIGNAL_INDEX.pubKeyHash]);
+  const signalHash = BigInt(publicSignals[PUBLIC_SIGNAL_INDEX.signalHash]);
+  const nullifierSeed = BigInt(
+    publicSignals[PUBLIC_SIGNAL_INDEX.nullifierSeed]
+  );
+
+  const ageAbove18Raw = Number(
+    publicSignals[PUBLIC_SIGNAL_INDEX.ageAbove18]
+  );
+  const genderRaw = Number(publicSignals[PUBLIC_SIGNAL_INDEX.gender]);
+  const stateRaw = BigInt(publicSignals[PUBLIC_SIGNAL_INDEX.state]);
+  const pinCodeRaw = Number(publicSignals[PUBLIC_SIGNAL_INDEX.pinCode]);
+
+  return {
+    nullifier,
+    timestamp,
+    pubKeyHash,
+    signalHash,
+    nullifierSeed,
+    ageAbove18: ageAbove18Raw !== 0 ? ageAbove18Raw === 1 : undefined,
+    gender: genderRaw !== 0 ? (genderRaw as Gender) : undefined,
+    state: stateRaw !== BigInt(0) ? stateRaw : undefined,
+    pinCode: pinCodeRaw !== 0 ? pinCodeRaw : undefined,
+  };
+}
+
+/**
+ * Format a proof for on-chain Solidity contract verification.
+ *
+ * The B point coordinates are reversed compared to the snarkjs JSON format,
+ * as required by the BN254 precompile calling convention.
+ *
+ * @param proof - The AnonCitizen proof to format
+ * @returns Calldata formatted for the AnonCitizen.verifyAndRecord() function
+ */
+export function formatProofForContract(
+  proof: AnonCitizenProof
+): ContractCalldata {
+  const p = proof.proof;
+
+  return {
+    pA: [p.pi_a[0], p.pi_a[1]],
+    // Note: B point coordinates are reversed for BN254 precompile
+    pB: [
+      [p.pi_b[0][1], p.pi_b[0][0]],
+      [p.pi_b[1][1], p.pi_b[1][0]],
+    ],
+    pC: [p.pi_c[0], p.pi_c[1]],
+    pubSignals: proof.publicSignals,
+  };
+}

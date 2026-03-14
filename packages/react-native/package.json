@@ -1,0 +1,56 @@
+{
+  "name": "@anoncitizen/react-native",
+  "version": "0.1.0",
+  "description": "React Native (Expo) SDK for AnonCitizen ZK Aadhaar verification",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --external react-native --external expo",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "npx eslint src/",
+    "clean": "rm -rf dist/"
+  },
+  "dependencies": {
+    "@anoncitizen/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react-native": ">=0.79.0",
+    "expo": ">=53.0.0",
+    "expo-camera": ">=17.0.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "react": "^19.0.0",
+    "@types/react": "^19.0.0",
+    "react-native": "^0.79.0",
+    "expo-camera": "^17.0.0",
+    "expo-image-picker": "^17.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anoncitizen/anoncitizen.git",
+    "directory": "packages/react-native"
+  },
+  "homepage": "https://github.com/anoncitizen/anoncitizen/tree/main/packages/react-native",
+  "bugs": {
+    "url": "https://github.com/anoncitizen/anoncitizen/issues"
+  },
+  "keywords": ["aadhaar", "zero-knowledge", "react-native", "expo", "zk-proof", "privacy", "mobile"]
+}

@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "paths": {
+      "@anoncitizen/core": ["../core/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "../core/src/circomlibjs.d.ts"],
+  "exclude": ["node_modules", "dist", "test"]
+}

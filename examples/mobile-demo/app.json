@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "AnonCitizen Demo",
+    "slug": "anoncitizen-demo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "backgroundColor": "#1976D2"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Camera is used to scan Aadhaar QR codes",
+        "NSPhotoLibraryUsageDescription": "Photo library is used to pick QR code images"
+      }
+    },
+    "android": {
+      "permissions": ["CAMERA"]
+    },
+    "plugins": ["expo-camera", "expo-image-picker"]
+  }
+}
