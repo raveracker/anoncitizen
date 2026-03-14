@@ -845,7 +845,7 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.signedData).toHaveLength(2048);
+      expect(inputs.signedData).toHaveLength(1280);
     });
 
     it("should apply SHA-256 padding to signedData", async () => {
@@ -1042,7 +1042,7 @@ describe("prover", () => {
       expect(inputs.timestampStart).toBe("0");
     });
 
-    it("should cap photoLength to MAX_PHOTO_BYTES (256)", async () => {
+    it("should cap photoLength to MAX_PHOTO_BYTES (64)", async () => {
       const largePhoto = new Uint8Array(500).fill(0x33);
       const payload = buildMockPayload({ photo: largePhoto });
       const pubKey = buildMockPublicKey();
@@ -1052,11 +1052,11 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.photoLength).toBe("256");
+      expect(inputs.photoLength).toBe("64");
     });
 
     it("should use actual photo length when under MAX_PHOTO_BYTES", async () => {
-      const smallPhoto = new Uint8Array(100).fill(0x33);
+      const smallPhoto = new Uint8Array(30).fill(0x33);
       const payload = buildMockPayload({ photo: smallPhoto });
       const pubKey = buildMockPublicKey();
       const request: ProofRequest = {
@@ -1065,7 +1065,7 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.photoLength).toBe("100");
+      expect(inputs.photoLength).toBe("30");
     });
 
     it("should set photoStart as string", async () => {

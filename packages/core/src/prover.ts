@@ -15,9 +15,9 @@ import { bytesToLimbs } from "./pre-verify.js";
 import { hashSignal } from "./utils.js";
 
 /** Maximum signed data bytes (must match circuit template parameter) */
-const MAX_DATA_BYTES = 2048;
+const MAX_DATA_BYTES = 1280;
 /** Maximum photo bytes for nullifier (must match circuit template parameter) */
-const MAX_PHOTO_BYTES = 256;
+const MAX_PHOTO_BYTES = 64;
 /** RSA limb bit size (matches @zk-email/circuits RSAVerifier65537) */
 const LIMB_BITS = 121;
 /** Number of RSA limbs (121 * 17 = 2057 >= 2048 bits) */

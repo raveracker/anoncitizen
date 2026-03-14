@@ -228,10 +228,10 @@ template AadhaarVerifier(maxDataBytes, n, k, maxPhotoBytes) {
 // MAIN COMPONENT
 // ================================================================
 // Default instantiation for Aadhaar V2 QR codes:
-//   maxDataBytes  = 2048  (supports real Aadhaar QR payloads up to ~2 KB signed data)
+//   maxDataBytes  = 1280  (fits real Aadhaar QR: ~1129 bytes signed + SHA-256 padding)
 //   n             = 121   (bits per RSA limb, recommended by @zk-email/circuits)
 //   k             = 17    (limbs for 2048-bit RSA: 121 * 17 = 2057 >= 2048)
-//   maxPhotoBytes = 256   (first 256 bytes of photo for nullifier uniqueness)
+//   maxPhotoBytes = 64    (first 64 bytes of photo — sufficient entropy for unique nullifier)
 
 component main {public [
     pubKey,
@@ -241,4 +241,4 @@ component main {public [
     revealGender,
     revealState,
     revealPinCode
-]} = AadhaarVerifier(2048, 121, 17, 256);
+]} = AadhaarVerifier(1280, 121, 17, 64);
