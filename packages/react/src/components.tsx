@@ -4,6 +4,7 @@
  */
 
 import { useRef, useEffect, useState, useCallback, type CSSProperties } from "react";
+import jsQR from "jsqr";
 
 // ============================================================
 // QRScanner
@@ -146,23 +147,32 @@ export function QRScanner({
     return () => cancelAnimationFrame(animFrame);
   }, [isScanning, onScan]);
 
-  // File upload handler
+  // File upload handler — decodes QR code from the uploaded image
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
       try {
-        // Read file as data URL for potential QR decoding
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const data = reader.result as string;
-          // For file-based QR, the data is the raw content
-          // A production implementation would use a QR decoding library
-          // (e.g., jsQR) to decode the image
-          onScan(data);
-        };
-        reader.readAsDataURL(file);
+        const bitmap = await createImageBitmap(file);
+        const canvas = document.createElement("canvas");
+        canvas.width = bitmap.width;
+        canvas.height = bitmap.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          onError?.(new Error("Failed to create canvas context"));
+          return;
+        }
+        ctx.drawImage(bitmap, 0, 0);
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+        const qrCode = jsQR(imageData.data, imageData.width, imageData.height);
+        if (!qrCode) {
+          onError?.(new Error("No QR code found in the image"));
+          return;
+        }
+
+        onScan(qrCode.data);
       } catch (err) {
         onError?.(
           err instanceof Error ? err : new Error("Failed to read QR image")

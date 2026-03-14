@@ -7,10 +7,10 @@
 import { sha256 } from "@noble/hashes/sha256";
 import type { AadhaarQRPayload, RSAPublicKey } from "./types.js";
 
-/** RSA limb size in bits (matches circuit: n=64) */
-const LIMB_BITS = 64;
-/** Number of limbs for RSA-2048 (matches circuit: k=32) */
-const NUM_LIMBS = 32;
+/** RSA limb size in bits (matches @zk-email/circuits: n=121) */
+const LIMB_BITS = 121;
+/** Number of limbs for RSA-2048 (matches @zk-email/circuits: k=17, 121*17=2057) */
+const NUM_LIMBS = 17;
 
 /**
  * Verify the RSA signature of an Aadhaar QR payload outside the circuit.

@@ -15,13 +15,13 @@ import { bytesToLimbs } from "./pre-verify.js";
 import { hashSignal } from "./utils.js";
 
 /** Maximum signed data bytes (must match circuit template parameter) */
-const MAX_DATA_BYTES = 512;
+const MAX_DATA_BYTES = 2048;
 /** Maximum photo bytes for nullifier (must match circuit template parameter) */
 const MAX_PHOTO_BYTES = 256;
-/** RSA limb bit size */
-const LIMB_BITS = 64;
-/** Number of RSA limbs */
-const NUM_LIMBS = 32;
+/** RSA limb bit size (matches @zk-email/circuits RSAVerifier65537) */
+const LIMB_BITS = 121;
+/** Number of RSA limbs (121 * 17 = 2057 >= 2048 bits) */
+const NUM_LIMBS = 17;
 
 /**
  * Generate an AnonCitizen ZK proof from a parsed QR payload.
@@ -65,9 +65,23 @@ export async function prepareCircuitInputs(
   publicKey: RSAPublicKey,
   request: ProofRequest
 ): Promise<CircuitInputs> {
-  // Pad signed data to MAX_DATA_BYTES
-  const signedData = padArray(payload.signedData, MAX_DATA_BYTES);
-  const signedDataLength = payload.signedData.length;
+  // Apply SHA-256 padding to the signed data (required by @zk-email/circuits Sha256Bytes)
+  // SHA-256 padding: data || 0x80 || zeros || 8-byte big-endian bit length
+  // Total must be a multiple of 64 bytes
+  const sha256Padded = applySha256Padding(payload.signedData);
+
+  // Validate padded data fits within circuit capacity
+  if (sha256Padded.length > MAX_DATA_BYTES) {
+    throw new Error(
+      `SHA-256 padded data too large for circuit: ${sha256Padded.length} bytes (max ${MAX_DATA_BYTES}). ` +
+      `Raw signed data is ${payload.signedData.length} bytes. ` +
+      `The circuit must be recompiled with a larger maxDataBytes parameter.`
+    );
+  }
+
+  // Pad to MAX_DATA_BYTES for circuit (zero-fill remainder)
+  const signedData = padArray(sha256Padded, MAX_DATA_BYTES);
+  const signedDataLength = sha256Padded.length;
 
   // Convert RSA signature to BigInt limbs
   const signatureLimbs = bytesToLimbs(
@@ -109,6 +123,27 @@ export async function prepareCircuitInputs(
     revealPinCode: request.revealPinCode ? "1" : "0",
     documentYear: documentYear.toString(),
   };
+}
+
+/**
+ * Apply SHA-256 message padding per FIPS 180-4.
+ * Appends: 0x80 | zeros | 8-byte big-endian bit length
+ * Result length is a multiple of 64 bytes.
+ */
+function applySha256Padding(data: Uint8Array): Uint8Array {
+  const bitLength = data.length * 8;
+  // Padded length: next multiple of 64 after (data.length + 1 + 8)
+  const paddedLength = Math.ceil((data.length + 9) / 64) * 64;
+  const padded = new Uint8Array(paddedLength);
+  padded.set(data);
+  padded[data.length] = 0x80;
+  // Write 64-bit big-endian bit length at the end
+  const view = new DataView(padded.buffer);
+  // Upper 32 bits (0 for data < 512 MB)
+  view.setUint32(paddedLength - 8, 0);
+  // Lower 32 bits
+  view.setUint32(paddedLength - 4, bitLength);
+  return padded;
 }
 
 /**

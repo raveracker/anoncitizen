@@ -29,10 +29,10 @@ circom "$CIRCUIT_DIR/aadhaar-verifier.circom" \
     --output "$BUILD_DIR" \
     -l "$NODE_MODULES"
 
-# Step 2: Print circuit info
+# Step 2: Print circuit info (may OOM on large circuits — non-critical)
 echo ""
 echo "[2/3] Circuit info:"
-snarkjs r1cs info "$BUILD_DIR/aadhaar-verifier.r1cs"
+NODE_OPTIONS="--max-old-space-size=8192" snarkjs r1cs info "$BUILD_DIR/aadhaar-verifier.r1cs" || echo "  (skipped — r1cs info ran out of memory, compilation was successful)"
 
 # Step 3: Copy WASM to artifacts
 echo ""

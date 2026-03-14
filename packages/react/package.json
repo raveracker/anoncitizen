@@ -24,7 +24,8 @@
     "clean": "rm -rf dist/"
   },
   "dependencies": {
-    "@anoncitizen/core": "workspace:*"
+    "@anoncitizen/core": "workspace:*",
+    "jsqr": "^1.4.0"
   },
   "peerDependencies": {
     "react": ">=19.0.0"

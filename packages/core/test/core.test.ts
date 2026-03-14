@@ -597,8 +597,8 @@ describe("pre-verify", () => {
     it("should convert to correct number of limbs", () => {
       const bytes = new Uint8Array(256).fill(0);
       bytes[255] = 1; // least significant byte = 1
-      const limbs = bytesToLimbs(bytes, 64, 32);
-      expect(limbs).toHaveLength(32);
+      const limbs = bytesToLimbs(bytes, 121, 17);
+      expect(limbs).toHaveLength(17);
     });
 
     it("should store least significant bits in limb[0]", () => {
@@ -639,12 +639,12 @@ describe("pre-verify", () => {
       expect(limbs[1]).toBe(mask32);
     });
 
-    it("should produce 32 limbs of 64 bits for RSA-2048", () => {
+    it("should produce 17 limbs of 121 bits for RSA-2048", () => {
       const modulus = new Uint8Array(256);
       modulus[0] = 0x80; // MSB set (valid RSA modulus)
       modulus[255] = 0x01; // LSB odd (valid RSA modulus)
-      const limbs = bytesToLimbs(modulus, 64, 32);
-      expect(limbs).toHaveLength(32);
+      const limbs = bytesToLimbs(modulus, 121, 17);
+      expect(limbs).toHaveLength(17);
       // limb[0] should include the LSB
       expect(limbs[0] & BigInt(1)).toBe(BigInt(1));
     });
@@ -658,7 +658,7 @@ describe("pre-verify", () => {
 
       expect(key.modulus).toBe(modulus);
       expect(key.exponent).toBe(65537);
-      expect(key.modulusLimbs).toHaveLength(32);
+      expect(key.modulusLimbs).toHaveLength(17);
     });
 
     it("should throw for wrong modulus size (128 bytes)", () => {
@@ -681,7 +681,7 @@ describe("pre-verify", () => {
       const modulus = new Uint8Array(256);
       for (let i = 0; i < 256; i++) modulus[i] = i & 0xff;
       const key = parseRSAPublicKey(modulus);
-      const directLimbs = bytesToLimbs(modulus, 64, 32);
+      const directLimbs = bytesToLimbs(modulus, 121, 17);
       expect(key.modulusLimbs).toEqual(directLimbs);
     });
   });
@@ -717,7 +717,7 @@ describe("pre-verify", () => {
 
       expect(key.modulus).toHaveLength(256);
       expect(key.exponent).toBe(65537);
-      expect(key.modulusLimbs).toHaveLength(32);
+      expect(key.modulusLimbs).toHaveLength(17);
     });
 
     it("should parse PEM string", () => {
@@ -829,7 +829,7 @@ function buildMockPublicKey(): RSAPublicKey {
   const modulus = new Uint8Array(256).fill(0xab);
   return {
     modulus,
-    modulusLimbs: bytesToLimbs(modulus, 64, 32),
+    modulusLimbs: bytesToLimbs(modulus, 121, 17),
     exponent: 65537,
   };
 }
@@ -845,10 +845,10 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.signedData).toHaveLength(512);
+      expect(inputs.signedData).toHaveLength(2048);
     });
 
-    it("should zero-pad signedData beyond original length", async () => {
+    it("should apply SHA-256 padding to signedData", async () => {
       const payload = buildMockPayload();
       const pubKey = buildMockPublicKey();
       const request: ProofRequest = {
@@ -857,9 +857,11 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      // Original data is 300 bytes, so index 300+ should be "0"
-      expect(inputs.signedData[300]).toBe("0");
-      expect(inputs.signedData[511]).toBe("0");
+      // Original data is 300 bytes. SHA-256 padding adds 0x80 at byte 300.
+      expect(inputs.signedData[300]).toBe("128"); // 0x80
+      // Beyond the SHA-256 padded block, rest should be zero-filled
+      // Padded length = ceil((300 + 9) / 64) * 64 = 320
+      expect(inputs.signedData[320]).toBe("0");
     });
 
     it("should convert signedData bytes to string array", async () => {
@@ -875,7 +877,7 @@ describe("prover", () => {
       expect(inputs.signedData[0]).toBe("17");
     });
 
-    it("should set signedDataLength to actual length", async () => {
+    it("should set signedDataLength to SHA-256 padded length", async () => {
       const payload = buildMockPayload();
       const pubKey = buildMockPublicKey();
       const request: ProofRequest = {
@@ -884,10 +886,11 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.signedDataLength).toBe("300");
+      // SHA-256 padded length of 300 bytes = ceil((300+9)/64)*64 = 320
+      expect(inputs.signedDataLength).toBe("320");
     });
 
-    it("should convert signature to 32 BigInt limb strings", async () => {
+    it("should convert signature to 17 BigInt limb strings", async () => {
       const payload = buildMockPayload();
       const pubKey = buildMockPublicKey();
       const request: ProofRequest = {
@@ -896,13 +899,13 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.signature).toHaveLength(32);
+      expect(inputs.signature).toHaveLength(17);
       inputs.signature.forEach((s) => {
         expect(() => BigInt(s)).not.toThrow();
       });
     });
 
-    it("should convert pubKey to 32 BigInt limb strings", async () => {
+    it("should convert pubKey to 17 BigInt limb strings", async () => {
       const payload = buildMockPayload();
       const pubKey = buildMockPublicKey();
       const request: ProofRequest = {
@@ -911,7 +914,7 @@ describe("prover", () => {
       };
 
       const inputs = await prepareCircuitInputs(payload, pubKey, request);
-      expect(inputs.pubKey).toHaveLength(32);
+      expect(inputs.pubKey).toHaveLength(17);
     });
 
     it("should compute signalHash for default signal", async () => {
@@ -1409,7 +1412,7 @@ describe("AnonCitizen class", () => {
       const ac = new AnonCitizen(baseConfig);
       const key: RSAPublicKey = {
         modulus: new Uint8Array(256).fill(0xab),
-        modulusLimbs: bytesToLimbs(new Uint8Array(256).fill(0xab), 64, 32),
+        modulusLimbs: bytesToLimbs(new Uint8Array(256).fill(0xab), 121, 17),
         exponent: 65537,
       };
       // Should not throw
@@ -1635,15 +1638,15 @@ describe("cross-module integration", () => {
     for (let i = 0; i < 256; i++) modulus[i] = (i * 37 + 13) & 0xff;
 
     const key = parseRSAPublicKey(modulus);
-    const directLimbs = bytesToLimbs(modulus, 64, 32);
+    const directLimbs = bytesToLimbs(modulus, 121, 17);
 
     expect(key.modulusLimbs).toEqual(directLimbs);
-    expect(key.modulusLimbs).toHaveLength(32);
+    expect(key.modulusLimbs).toHaveLength(17);
 
     // Reconstruct the original value from limbs
     let reconstructed = BigInt(0);
     for (let i = key.modulusLimbs.length - 1; i >= 0; i--) {
-      reconstructed = (reconstructed << BigInt(64)) | key.modulusLimbs[i];
+      reconstructed = (reconstructed << BigInt(121)) | key.modulusLimbs[i];
     }
 
     // Original value from bytes
