@@ -26,7 +26,7 @@ interface IAnonCitizen {
         uint[2] calldata _pA,
         uint[2][2] calldata _pB,
         uint[2] calldata _pC,
-        uint[9] calldata _pubSignals
+        uint[32] calldata _pubSignals
     ) external;
 
     /// @notice Checks if a nullifier has already been used
