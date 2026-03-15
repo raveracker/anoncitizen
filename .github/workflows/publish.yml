@@ -29,11 +29,11 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Build all packages
-        run: pnpm turbo build
+      - name: Build publishable packages
+        run: pnpm turbo build --filter=@anoncitizen/core --filter=@anoncitizen/react --filter=@anoncitizen/contracts
 
-      - name: Run all tests
-        run: pnpm turbo test
+      - name: Run tests
+        run: pnpm turbo test --filter=@anoncitizen/core --filter=@anoncitizen/react --filter=@anoncitizen/contracts
 
       - name: Publish @anoncitizen/core
         run: pnpm --filter @anoncitizen/core publish --no-git-checks --access public

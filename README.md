@@ -152,6 +152,44 @@ The release pipeline runs automatically on tag push:
 3. **Publish** — publish `@anoncitizen/core`, `@anoncitizen/react`, `@anoncitizen/contracts` to npm
 4. **Release** — create a GitHub Release with auto-generated notes
 
+## Roadmap
+
+### SDK & Language Support
+
+| Language | Package | Status |
+|---|---|---|
+| TypeScript/JavaScript | `@anoncitizen/core` | Available |
+| React | `@anoncitizen/react` | Available |
+| Python | `anoncitizen-py` | Planned |
+| Rust | `anoncitizen-rs` | Planned |
+| Go | `anoncitizen-go` | Planned |
+
+### Mobile SDKs
+
+| Platform | Package | Status |
+|---|---|---|
+| React Native | `@anoncitizen/react-native` | Planned |
+| Flutter | `anoncitizen_flutter` | Planned |
+| Android (Kotlin) | `anoncitizen-android` | Planned |
+| iOS (Swift) | `AnonCitizen` | Planned |
+
+### REST API
+
+A self-hosted API server for proof generation and verification — no SDK integration required.
+
+```
+POST /api/prove     — Generate a ZK proof from QR data
+POST /api/verify    — Verify a proof off-chain
+GET  /api/health    — Server health + circuit artifact status
+```
+
+Planned features:
+- Docker image with rapidsnark for fast proof generation (~3s)
+- API key authentication
+- Rate limiting and request queuing
+- Webhook callbacks for async proof generation
+- OpenAPI/Swagger documentation
+
 ## Security
 
 This project has undergone internal security review (see `docs/phase-outputs/phase-5/`). The Groth16 verifier requires a trusted setup ceremony before production deployment.
