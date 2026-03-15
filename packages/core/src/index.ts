@@ -89,9 +89,16 @@ import { generateProof } from "./prover.js";
 import { verifyProofOffChain, formatProofForContract } from "./verifier.js";
 import type { ContractCalldata } from "./types.js";
 
+// The UIDAI certificate is read from assets/uidai-offline-ekyc.cer at build time
+// and injected via tsup's `define` (build) and vitest's `define` (test).
+declare const __UIDAI_CERT__: string;
+
 /**
  * Main entry point for the AnonCitizen SDK.
  * Provides a convenient wrapper around the lower-level functions.
+ *
+ * The UIDAI Offline eKYC certificate is loaded automatically from the bundled
+ * .cer file. Call `setPublicKey()` to override with a different certificate.
  */
 export class AnonCitizen {
   private config: AnonCitizenConfig;
@@ -102,6 +109,11 @@ export class AnonCitizen {
     this.config = config;
     if (config.verificationKey) {
       this.verificationKey = config.verificationKey;
+    }
+    try {
+      this.publicKey = parseRSAPublicKeyFromCert(__UIDAI_CERT__);
+    } catch {
+      // Not available in environments that don't process the define (e.g. Metro)
     }
   }
 

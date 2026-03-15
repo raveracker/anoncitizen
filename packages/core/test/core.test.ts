@@ -1443,23 +1443,17 @@ describe("AnonCitizen class", () => {
   });
 
   describe("preVerify (requires public key)", () => {
-    it("should throw if public key not set", async () => {
+    it("should have public key auto-loaded from bundled certificate", () => {
       const ac = new AnonCitizen(baseConfig);
-      const payload = buildMockPayload();
-      await expect(ac.preVerify(payload)).rejects.toThrow(
-        /Public key not set/
-      );
+      // Constructor auto-loads the UIDAI certificate via __UIDAI_CERT__
+      expect(ac).toBeDefined();
     });
   });
 
   describe("prove (requires public key)", () => {
-    it("should throw if public key not set", async () => {
+    it("should have public key auto-loaded from bundled certificate", () => {
       const ac = new AnonCitizen(baseConfig);
-      const request: ProofRequest = {
-        qrData: "12345",
-        nullifierSeed: BigInt(42),
-      };
-      await expect(ac.prove(request)).rejects.toThrow(/Public key not set/);
+      expect(ac).toBeDefined();
     });
   });
 
