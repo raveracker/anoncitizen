@@ -73,7 +73,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
@@ -111,7 +111,7 @@ jobs:
       - name: Groth16 Phase 2 setup
         run: |
           cd packages/circuits
-          snarkjs groth16 setup \
+          npx snarkjs groth16 setup \
             build/aadhaar-verifier.r1cs \
             build/powersOfTau28_hez_final_${{ env.PTAU_SIZE }}.ptau \
             build/aadhaar-verifier_0000.zkey
@@ -119,7 +119,7 @@ jobs:
       - name: Phase 2 contribution
         run: |
           cd packages/circuits
-          snarkjs zkey contribute \
+          npx snarkjs zkey contribute \
             build/aadhaar-verifier_0000.zkey \
             build/aadhaar-verifier_final.zkey \
             --name="GitHub Actions CI contribution" \
@@ -128,10 +128,10 @@ jobs:
       - name: Export artifacts
         run: |
           cd packages/circuits
-          snarkjs zkey export verificationkey \
+          npx snarkjs zkey export verificationkey \
             build/aadhaar-verifier_final.zkey \
             artifacts/verification_key.json
-          snarkjs zkey export solidityverifier \
+          npx snarkjs zkey export solidityverifier \
             build/aadhaar-verifier_final.zkey \
             artifacts/Groth16Verifier.sol
           cp build/aadhaar-verifier_final.zkey artifacts/aadhaar-verifier.zkey
