@@ -1,0 +1,119 @@
+name: Build Circuit Artifacts
+
+on:
+  workflow_dispatch:
+    inputs:
+      ptau_size:
+        description: "Powers of Tau size (2^N)"
+        required: true
+        type: choice
+        options:
+          - "21"
+          - "23"
+        default: "23"
+      upload_artifacts:
+        description: "Upload artifacts to GitHub release"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compile & Setup (ptau 2^${{ inputs.ptau_size }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      NODE_OPTIONS: "--max-old-space-size=8192"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Install circom
+        run: |
+          curl -L https://github.com/iden3/circom/releases/latest/download/circom-linux-amd64 -o /usr/local/bin/circom
+          chmod +x /usr/local/bin/circom
+          circom --version
+
+      - name: Compile circuit
+        run: |
+          cd packages/circuits
+          circom aadhaar-verifier.circom --r1cs --wasm -o build/ -l node_modules/
+          cp build/aadhaar-verifier_js/aadhaar-verifier.wasm artifacts/
+
+      - name: Download Powers of Tau
+        run: |
+          cd packages/circuits/build
+          curl -L -o powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau \
+            https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau
+
+      - name: Groth16 Phase 2 setup
+        run: |
+          cd packages/circuits
+          snarkjs groth16 setup \
+            build/aadhaar-verifier.r1cs \
+            build/powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau \
+            build/aadhaar-verifier_0000.zkey
+
+      - name: Phase 2 contribution
+        run: |
+          cd packages/circuits
+          snarkjs zkey contribute \
+            build/aadhaar-verifier_0000.zkey \
+            build/aadhaar-verifier_final.zkey \
+            --name="GitHub Actions CI contribution" \
+            -v -e="$(head -c 64 /dev/urandom | xxd -p)"
+
+      - name: Export verification key
+        run: |
+          cd packages/circuits
+          snarkjs zkey export verificationkey \
+            build/aadhaar-verifier_final.zkey \
+            artifacts/verification_key.json
+
+      - name: Export Solidity verifier
+        run: |
+          cd packages/circuits
+          snarkjs zkey export solidityverifier \
+            build/aadhaar-verifier_final.zkey \
+            artifacts/Groth16Verifier.sol
+
+      - name: Copy final zkey
+        run: |
+          cp packages/circuits/build/aadhaar-verifier_final.zkey \
+             packages/circuits/artifacts/aadhaar-verifier.zkey
+
+      - name: Record zkey hash
+        run: |
+          shasum -a 256 packages/circuits/artifacts/aadhaar-verifier.zkey | tee zkey-hash.txt
+          echo "## Circuit Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | Size |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          ls -lh packages/circuits/artifacts/ | tail -n +2 | awk '{print "| " $NF " | " $5 " |"}' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**zkey SHA-256:** \`$(cat zkey-hash.txt | awk '{print $1}')\`" >> $GITHUB_STEP_SUMMARY
+          echo "**ptau size:** 2^${{ inputs.ptau_size }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload artifacts
+        if: inputs.upload_artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuit-artifacts-ptau${{ inputs.ptau_size }}
+          path: |
+            packages/circuits/artifacts/aadhaar-verifier.wasm
+            packages/circuits/artifacts/aadhaar-verifier.zkey
+            packages/circuits/artifacts/verification_key.json
+            packages/circuits/artifacts/Groth16Verifier.sol
+            zkey-hash.txt
+          retention-days: 90

@@ -8,7 +8,7 @@
 | pnpm | 10+ | `pnpm -v` |
 | circom | 2.x | `circom --version` |
 | snarkjs | 0.7+ | `npx snarkjs --version` |
-| Expo CLI | latest | `npx expo --version` (mobile demo only) |
+| rapidsnark | 0.0.8+ | `rapidsnark` (optional, for fast proofs) |
 
 ### Installing circom
 
@@ -234,26 +234,7 @@ Tests use vitest + @testing-library/react. Covers hooks (`useAnonCitizen`, `useP
 
 ---
 
-## 5. React Native SDK (`packages/react-native/`)
-
-### Build
-
-```bash
-cd packages/react-native
-pnpm build
-```
-
-### Run Tests
-
-```bash
-pnpm test
-```
-
-Tests use vitest. Covers hooks and components (`CameraQRScanner`, `ImageQRScanner`, `ProofStatus`).
-
----
-
-## 6. Web Demo (`examples/web-demo/`)
+## 5. Web Demo (`examples/web-demo/`)
 
 ### Run Locally
 
@@ -277,31 +258,6 @@ npx playwright install --with-deps chromium
 # Run tests (starts web-demo dev server automatically)
 npx playwright test --config=tests/e2e/playwright.config.ts --project=chromium
 ```
-
----
-
-## 7. Mobile Demo (`examples/mobile-demo/`)
-
-### Run Locally
-
-```bash
-# Build dependencies first
-pnpm turbo build --filter=@anoncitizen/core --filter=@anoncitizen/react-native
-
-# Start Expo dev server
-cd examples/mobile-demo
-pnpm start
-```
-
-- Press `i` for iOS Simulator
-- Press `a` for Android Emulator
-- Scan the QR code with Expo Go on a physical device
-
-### Requirements for Mobile
-
-- **iOS**: Xcode + iOS Simulator
-- **Android**: Android Studio + AVD (or a physical device with Expo Go)
-- **Physical device**: Install Expo Go from App Store / Play Store
 
 ---
 
@@ -467,6 +423,6 @@ git push origin main --tags
 
 The `release.yml` GitHub Action will automatically:
 1. Run the full CI pipeline
-2. Publish all 4 packages to npm
+2. Publish all 3 packages to npm
 3. Create a GitHub Release
 4. Deploy contracts to Polygon Amoy (non-alpha tags)
