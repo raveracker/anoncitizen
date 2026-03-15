@@ -1,5 +1,11 @@
 # @anoncitizen/circuits
 
+## 1.2.0
+
+### Minor Changes
+
+- Workflow Fixes
+
 ## 1.1.0
 
 ### Minor Changes
