@@ -197,9 +197,9 @@ The release pipeline runs automatically on tag push:
 |---|---|---|
 | TypeScript/JavaScript | `@anoncitizen/core` | Available |
 | React | `@anoncitizen/react` | Available |
-| Python | `anoncitizen-py` | Planned |
-| Rust | `anoncitizen-rs` | Planned |
-| Go | `anoncitizen-go` | Planned |
+| Python | `@anoncitizen/python` | Planned |
+| Rust | `@anoncitizen/rust` | Planned |
+| Go | `@anoncitizen/go` | Planned |
 
 ### Mobile SDKs
 
@@ -229,7 +229,7 @@ Planned features:
 
 ## Security
 
-This project has undergone internal security review (see `docs/phase-outputs/phase-5/`). The Groth16 verifier requires a trusted setup ceremony before production deployment.
+This project has undergone internal security review (see [SECURITY_AUDIT.md](./SECURITY_AUDIT.md). The Groth16 verifier requires a trusted setup ceremony before production deployment.
 
 If you discover a vulnerability, please report it responsibly — do not open a public issue.
 
