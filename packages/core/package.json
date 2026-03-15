@@ -1,6 +1,6 @@
 {
   "name": "@anoncitizen/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Core TypeScript SDK for AnonCitizen ZK Aadhaar verification",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -13,7 +13,10 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "artifacts"],
+  "files": [
+    "dist",
+    "artifacts"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "test": "vitest run",
@@ -47,5 +50,13 @@
   "bugs": {
     "url": "https://github.com/anoncitizen/anoncitizen/issues"
   },
-  "keywords": ["aadhaar", "zero-knowledge", "zk-proof", "groth16", "snarkjs", "privacy", "identity"]
+  "keywords": [
+    "aadhaar",
+    "zero-knowledge",
+    "zk-proof",
+    "groth16",
+    "snarkjs",
+    "privacy",
+    "identity"
+  ]
 }

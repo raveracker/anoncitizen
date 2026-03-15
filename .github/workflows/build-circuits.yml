@@ -1,6 +1,15 @@
-name: Build Circuit Artifacts
+name: Build & Deploy Circuit Artifacts
 
 on:
+  # Auto-trigger when circuit files change on main
+  push:
+    branches: [main]
+    paths:
+      - "packages/circuits/**/*.circom"
+      - "packages/circuits/scripts/**"
+      - "packages/circuits/package.json"
+
+  # Manual trigger for trusted setup with custom ptau size
   workflow_dispatch:
     inputs:
       ptau_size:
@@ -11,22 +20,52 @@ on:
           - "21"
           - "23"
         default: "23"
-      upload_artifacts:
-        description: "Upload artifacts to GitHub release"
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: write
 
+env:
+  NODE_OPTIONS: "--max-old-space-size=8192"
+  PTAU_SIZE: ${{ inputs.ptau_size || '23' }}
+
 jobs:
-  build:
-    name: Compile & Setup (ptau 2^${{ inputs.ptau_size }})
+  # Step 1: Check if circuit files actually changed (for push trigger)
+  check-changes:
+    name: Check Circuit Changes
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Check for circuit changes
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- packages/circuits/ | grep -c '\.circom\|scripts/\|package.json' || true)
+            if [ "$CHANGED" -gt 0 ]; then
+              echo "changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "changed=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  # Step 2: Compile circuit and run trusted setup
+  build:
+    name: Compile & Trusted Setup
+    runs-on: ubuntu-latest
+    needs: [check-changes]
+    if: needs.check-changes.outputs.changed == 'true'
     timeout-minutes: 120
-    env:
-      NODE_OPTIONS: "--max-old-space-size=8192"
+    outputs:
+      zkey-hash: ${{ steps.hash.outputs.zkey_hash }}
+      wasm-url: ${{ steps.upload.outputs.wasm_url }}
+      zkey-url: ${{ steps.upload.outputs.zkey_url }}
+      vkey-url: ${{ steps.upload.outputs.vkey_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -48,21 +87,33 @@ jobs:
       - name: Compile circuit
         run: |
           cd packages/circuits
+          mkdir -p build artifacts
           circom aadhaar-verifier.circom --r1cs --wasm -o build/ -l node_modules/
           cp build/aadhaar-verifier_js/aadhaar-verifier.wasm artifacts/
 
+      - name: Cache Powers of Tau
+        uses: actions/cache@v4
+        with:
+          path: packages/circuits/build/powersOfTau28_hez_final_${{ env.PTAU_SIZE }}.ptau
+          key: ptau-${{ env.PTAU_SIZE }}
+
       - name: Download Powers of Tau
         run: |
-          cd packages/circuits/build
-          curl -L -o powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau \
-            https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau
+          PTAU_FILE="packages/circuits/build/powersOfTau28_hez_final_${{ env.PTAU_SIZE }}.ptau"
+          if [ ! -f "$PTAU_FILE" ]; then
+            echo "Downloading ptau 2^${{ env.PTAU_SIZE }}..."
+            curl -L -o "$PTAU_FILE" \
+              "https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_${{ env.PTAU_SIZE }}.ptau"
+          else
+            echo "Using cached ptau file"
+          fi
 
       - name: Groth16 Phase 2 setup
         run: |
           cd packages/circuits
           snarkjs groth16 setup \
             build/aadhaar-verifier.r1cs \
-            build/powersOfTau28_hez_final_${{ inputs.ptau_size }}.ptau \
+            build/powersOfTau28_hez_final_${{ env.PTAU_SIZE }}.ptau \
             build/aadhaar-verifier_0000.zkey
 
       - name: Phase 2 contribution
@@ -74,46 +125,102 @@ jobs:
             --name="GitHub Actions CI contribution" \
             -v -e="$(head -c 64 /dev/urandom | xxd -p)"
 
-      - name: Export verification key
+      - name: Export artifacts
         run: |
           cd packages/circuits
           snarkjs zkey export verificationkey \
             build/aadhaar-verifier_final.zkey \
             artifacts/verification_key.json
-
-      - name: Export Solidity verifier
-        run: |
-          cd packages/circuits
           snarkjs zkey export solidityverifier \
             build/aadhaar-verifier_final.zkey \
             artifacts/Groth16Verifier.sol
-
-      - name: Copy final zkey
-        run: |
-          cp packages/circuits/build/aadhaar-verifier_final.zkey \
-             packages/circuits/artifacts/aadhaar-verifier.zkey
+          cp build/aadhaar-verifier_final.zkey artifacts/aadhaar-verifier.zkey
 
       - name: Record zkey hash
+        id: hash
         run: |
-          shasum -a 256 packages/circuits/artifacts/aadhaar-verifier.zkey | tee zkey-hash.txt
-          echo "## Circuit Build Summary" >> $GITHUB_STEP_SUMMARY
+          HASH=$(shasum -a 256 packages/circuits/artifacts/aadhaar-verifier.zkey | awk '{print $1}')
+          echo "zkey_hash=$HASH" >> $GITHUB_OUTPUT
+          echo "$HASH" > packages/circuits/artifacts/zkey-sha256.txt
+
+      - name: Upload to Cloudflare R2
+        id: upload
+        run: |
+          BUCKET_URL="${{ secrets.R2_PUBLIC_URL }}/circuits"
+
+          # Install AWS CLI (R2 is S3-compatible)
+          pip install awscli --quiet
+
+          # Upload each artifact
+          aws s3 cp packages/circuits/artifacts/aadhaar-verifier.wasm \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/circuits/aadhaar-verifier.wasm" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+            --content-type "application/wasm"
+
+          aws s3 cp packages/circuits/artifacts/aadhaar-verifier.zkey \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/circuits/aadhaar-verifier.zkey" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+            --content-type "application/octet-stream"
+
+          aws s3 cp packages/circuits/artifacts/verification_key.json \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/circuits/verification_key.json" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+            --content-type "application/json"
+
+          aws s3 cp packages/circuits/artifacts/zkey-sha256.txt \
+            "s3://${{ secrets.R2_BUCKET_NAME }}/circuits/zkey-sha256.txt" \
+            --endpoint-url "${{ secrets.R2_ENDPOINT }}" \
+            --content-type "text/plain"
+
+          echo "wasm_url=${BUCKET_URL}/aadhaar-verifier.wasm" >> $GITHUB_OUTPUT
+          echo "zkey_url=${BUCKET_URL}/aadhaar-verifier.zkey" >> $GITHUB_OUTPUT
+          echo "vkey_url=${BUCKET_URL}/verification_key.json" >> $GITHUB_OUTPUT
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+
+      - name: Commit Groth16Verifier.sol + verification_key.json
+        run: |
+          # Copy Solidity verifier to contracts package
+          cp packages/circuits/artifacts/Groth16Verifier.sol packages/contracts/contracts/Groth16Verifier.sol
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/contracts/contracts/Groth16Verifier.sol
+          git diff --staged --quiet || git commit -m "chore: update Groth16Verifier.sol from circuit build
+
+          zkey SHA-256: ${{ steps.hash.outputs.zkey_hash }}
+          ptau size: 2^${{ env.PTAU_SIZE }}"
+          git push || echo "Nothing to push"
+
+      - name: Upload to GitHub Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: circuit-artifacts
+          path: |
+            packages/circuits/artifacts/aadhaar-verifier.wasm
+            packages/circuits/artifacts/verification_key.json
+            packages/circuits/artifacts/Groth16Verifier.sol
+            packages/circuits/artifacts/zkey-sha256.txt
+          retention-days: 90
+
+      - name: Build Summary
+        run: |
+          echo "## Circuit Build & Deploy Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Artifacts" >> $GITHUB_STEP_SUMMARY
           echo "| Artifact | Size |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           ls -lh packages/circuits/artifacts/ | tail -n +2 | awk '{print "| " $NF " | " $5 " |"}' >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**zkey SHA-256:** \`$(cat zkey-hash.txt | awk '{print $1}')\`" >> $GITHUB_STEP_SUMMARY
-          echo "**ptau size:** 2^${{ inputs.ptau_size }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload artifacts
-        if: inputs.upload_artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: circuit-artifacts-ptau${{ inputs.ptau_size }}
-          path: |
-            packages/circuits/artifacts/aadhaar-verifier.wasm
-            packages/circuits/artifacts/aadhaar-verifier.zkey
-            packages/circuits/artifacts/verification_key.json
-            packages/circuits/artifacts/Groth16Verifier.sol
-            zkey-hash.txt
-          retention-days: 90
+          echo "### Integrity" >> $GITHUB_STEP_SUMMARY
+          echo "- **zkey SHA-256:** \`${{ steps.hash.outputs.zkey_hash }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **ptau size:** 2^${{ env.PTAU_SIZE }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Cloudflare R2 URLs" >> $GITHUB_STEP_SUMMARY
+          echo "| File | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| WASM | \`${{ steps.upload.outputs.wasm_url }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| zkey | \`${{ steps.upload.outputs.zkey_url }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Verification Key | \`${{ steps.upload.outputs.vkey_url }}\` |" >> $GITHUB_STEP_SUMMARY
