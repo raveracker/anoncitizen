@@ -127,6 +127,31 @@ pnpm turbo test
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup details.
 
+## Publishing a New Version
+
+```bash
+# 1. Create a changeset (select packages + describe changes)
+pnpm changeset
+
+# 2. Apply version bumps to package.json files
+pnpm run version
+
+# 3. Commit the version bumps and changelogs
+git add .
+git commit -m "chore: release v0.x.0"
+
+# 4. Tag and push — triggers the full release pipeline
+git tag v0.x.0
+git push origin main --tags
+```
+
+The release pipeline runs automatically on tag push:
+
+1. **CI** — lint, typecheck, test all packages (202 tests)
+2. **Deploy** — deploy contracts to Polygon Amoy testnet
+3. **Publish** — publish `@anoncitizen/core`, `@anoncitizen/react`, `@anoncitizen/contracts` to npm
+4. **Release** — create a GitHub Release with auto-generated notes
+
 ## Security
 
 This project has undergone internal security review (see `docs/phase-outputs/phase-5/`). The Groth16 verifier requires a trusted setup ceremony before production deployment.
