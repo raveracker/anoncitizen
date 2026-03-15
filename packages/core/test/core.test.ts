@@ -1201,19 +1201,19 @@ describe("verifier", () => {
       const signals = [...baseSignals];
       signals[PUBLIC_SIGNAL_INDEX.gender] = "1";
       const result = decodePublicSignals(signals);
-      expect(result.gender).toBe(Gender.Male);
+      expect(result.gender).toBe("M");
     });
 
     it("should decode gender=2 as Female", () => {
       const result = decodePublicSignals(baseSignals);
-      expect(result.gender).toBe(Gender.Female);
+      expect(result.gender).toBe("F");
     });
 
     it("should decode gender=3 as Transgender", () => {
       const signals = [...baseSignals];
       signals[PUBLIC_SIGNAL_INDEX.gender] = "3";
       const result = decodePublicSignals(signals);
-      expect(result.gender).toBe(Gender.Transgender);
+      expect(result.gender).toBe("T");
     });
 
     it("should decode gender=0 as undefined (not revealed)", () => {
@@ -1230,9 +1230,10 @@ describe("verifier", () => {
       expect(result.state).toBeUndefined();
     });
 
-    it("should decode non-zero state as bigint", () => {
+    it("should decode non-zero state as string", () => {
       const result = decodePublicSignals(baseSignals);
-      expect(result.state).toBe(BigInt(99));
+      // 99 packed big-endian = single byte 0x63 = 'c'
+      expect(result.state).toBe("c");
     });
 
     it("should decode pinCode=0 as undefined (not revealed)", () => {

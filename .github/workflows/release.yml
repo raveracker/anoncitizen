@@ -44,11 +44,6 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @anoncitizen/react-native
-        run: pnpm --filter @anoncitizen/react-native publish --no-git-checks --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @anoncitizen/contracts
         run: pnpm --filter @anoncitizen/contracts publish --no-git-checks --access public
         env:

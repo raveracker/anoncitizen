@@ -156,10 +156,10 @@ export interface VerificationResult {
   nullifierSeed: bigint;
   /** Whether age >= 18 (undefined if not revealed) */
   ageAbove18?: boolean;
-  /** Gender (undefined if not revealed) */
-  gender?: Gender;
-  /** State name/code (undefined if not revealed) */
-  state?: bigint;
+  /** Gender: "M", "F", or "T" (undefined if not revealed) */
+  gender?: string;
+  /** State name (undefined if not revealed) */
+  state?: string;
   /** 6-digit PIN code (undefined if not revealed) */
   pinCode?: number;
 }

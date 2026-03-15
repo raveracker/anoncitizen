@@ -87,25 +87,6 @@ jobs:
       - name: Build & test react
         run: pnpm turbo test --filter=@anoncitizen/react
 
-  test-react-native:
-    name: React Native SDK Tests
-    runs-on: ubuntu-latest
-    needs: [test-core]
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Build & test react-native
-        run: pnpm turbo test --filter=@anoncitizen/react-native
-
   test-contracts:
     name: Contract Tests
     runs-on: ubuntu-latest

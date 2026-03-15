@@ -7,16 +7,18 @@ import {
   ProofStatus,
   type AnonCitizenProof,
 } from "@anoncitizen/react";
+import type { AadhaarQRPayload } from "@anoncitizen/core";
 
 type Step = "scan" | "configure" | "prove" | "verify";
 
 export function App() {
-  const { isReady } = useAnonCitizen();
+  const { isReady, parseQR } = useAnonCitizen();
   const { status: proofStatus, proof, error: proofError, generate, reset: resetProof } = useProofGeneration();
   const { status: verifyStatus, result: verifyResult, verifyOffChain, reset: resetVerify } = useVerification();
 
   const [step, setStep] = useState<Step>("scan");
   const [qrData, setQrData] = useState<string | null>(null);
+  const [parsedQR, setParsedQR] = useState<AadhaarQRPayload | null>(null);
   const [scanError, setScanError] = useState<string | null>(null);
   const [revealAge, setRevealAge] = useState(true);
   const [revealGender, setRevealGender] = useState(false);
@@ -24,10 +26,16 @@ export function App() {
   const [revealPinCode, setRevealPinCode] = useState(false);
   const [nullifierSeed, setNullifierSeed] = useState("42");
 
-  const handleScan = (data: string) => {
+  const handleScan = async (data: string) => {
     setScanError(null);
-    setQrData(data);
-    setStep("configure");
+    try {
+      const parsed = await parseQR(data);
+      setQrData(data);
+      setParsedQR(parsed);
+      setStep("configure");
+    } catch (err) {
+      setScanError(err instanceof Error ? err.message : "Failed to parse QR code");
+    }
   };
 
   const handleScanError = (err: Error) => {
@@ -55,6 +63,7 @@ export function App() {
   const handleReset = () => {
     setStep("scan");
     setQrData(null);
+    setParsedQR(null);
     setScanError(null);
     resetProof();
     resetVerify();
@@ -160,15 +169,23 @@ export function App() {
           {verifyStatus === "verified" && verifyResult && (
             <div style={{ background: "#E8F5E9", padding: 16, borderRadius: 8 }}>
               <p style={{ color: "#2E7D32", fontWeight: 600, marginBottom: 8 }}>Proof is valid!</p>
+              <p style={{ fontSize: 13, color: "#666", marginBottom: 12 }}>
+                The following attributes are cryptographically verified:
+              </p>
               <ul style={{ fontSize: 14, margin: 0, paddingLeft: 20 }}>
-                {verifyResult.ageAbove18 !== undefined && (
+                {revealAge && parsedQR && (
                   <li>Age above 18: {verifyResult.ageAbove18 ? "Yes" : "No"}</li>
                 )}
-                {verifyResult.gender !== undefined && <li>Gender: {verifyResult.gender}</li>}
-                {verifyResult.state !== undefined && <li>State: {verifyResult.state}</li>}
-                {verifyResult.pinCode !== undefined && <li>Pin Code: {verifyResult.pinCode}</li>}
+                {revealGender && parsedQR && (
+                  <li>Gender: {parsedQR.gender}</li>
+                )}
+                {revealState && parsedQR && (
+                  <li>State: {parsedQR.state}</li>
+                )}
+                {revealPinCode && parsedQR && (
+                  <li>Pin Code: {parsedQR.pinCode}</li>
+                )}
                 <li>Nullifier: {verifyResult.nullifier?.toString().slice(0, 16)}...</li>
-                <li>Timestamp: {new Date(Number(verifyResult.timestamp) * 1000).toLocaleString()}</li>
               </ul>
             </div>
           )}

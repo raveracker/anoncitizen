@@ -150,8 +150,6 @@ export function useProofGeneration(): UseProofGenerationReturn {
         setProof(result);
         setStatus("complete");
       } catch (err) {
-        console.error("Proof generation error:", err);
-        console.error("Stack:", err instanceof Error ? err.stack : "no stack");
         setError(err instanceof Error ? err.message : "Proof generation failed");
         setStatus("error");
       }
