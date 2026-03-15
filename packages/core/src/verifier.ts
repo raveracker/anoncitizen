@@ -6,7 +6,6 @@
 import type {
   AnonCitizenProof,
   ContractCalldata,
-  Gender,
   VerificationKey,
   VerificationResult,
 } from "./types.js";
@@ -69,10 +68,43 @@ export function decodePublicSignals(publicSignals: string[]): Omit<
     signalHash,
     nullifierSeed,
     ageAbove18: ageAbove18Raw !== 0 ? ageAbove18Raw === 1 : undefined,
-    gender: genderRaw !== 0 ? (genderRaw as Gender) : undefined,
-    state: stateRaw !== BigInt(0) ? stateRaw : undefined,
+    gender: genderRaw !== 0 ? decodeGender(genderRaw) : undefined,
+    state: stateRaw !== 0n ? decodePackedString(stateRaw) : undefined,
     pinCode: pinCodeRaw !== 0 ? pinCodeRaw : undefined,
   };
+}
+
+/**
+ * Decode gender code to human-readable string.
+ * Circuit outputs: 1=M, 2=F, 3=T
+ */
+function decodeGender(code: number): string | undefined {
+  switch (code) {
+    case 1: return "M";
+    case 2: return "F";
+    case 3: return "T";
+    default: return undefined;
+  }
+}
+
+/**
+ * Decode a packed BigInt back to a string.
+ * The circuit packs as: accum = accum * 256 + byte (big-endian).
+ * To decode: extract bytes from LSB, then reverse.
+ */
+function decodePackedString(packed: bigint): string {
+  const bytes: number[] = [];
+  let value = packed;
+  while (value > 0n) {
+    bytes.push(Number(value & 0xffn));
+    value >>= 8n;
+  }
+  bytes.reverse();
+  // Strip trailing null bytes from fixed-width extraction
+  while (bytes.length > 0 && bytes[bytes.length - 1] === 0) {
+    bytes.pop();
+  }
+  return String.fromCharCode(...bytes);
 }
 
 /**
