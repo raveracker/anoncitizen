@@ -43,12 +43,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/anoncitizen/anoncitizen.git",
+    "url": "https://github.com/raveracker/anoncitizen.git",
     "directory": "packages/core"
   },
-  "homepage": "https://github.com/anoncitizen/anoncitizen/tree/main/packages/core",
+  "homepage": "https://github.com/raveracker/anoncitizen/tree/main/packages/core",
   "bugs": {
-    "url": "https://github.com/anoncitizen/anoncitizen/issues"
+    "url": "https://github.com/raveracker/anoncitizen/issues"
   },
   "keywords": [
     "aadhaar",

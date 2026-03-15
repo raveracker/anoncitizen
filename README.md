@@ -4,6 +4,43 @@ Privacy-preserving zero-knowledge proof protocol for Aadhaar identity verificati
 
 Prove ownership of an Aadhaar document without exposing personal information. Verify proofs off-chain or on EVM-compatible blockchains.
 
+## Use Cases
+
+### Financial Services & Fintech
+- **KYC without data exposure** — Banks, NBFCs, and lending platforms can verify a customer is a real Aadhaar holder without storing or processing their personal data, reducing compliance burden under DPDPA and RBI guidelines.
+- **Credit scoring prerequisites** — Verify age, state, and identity uniqueness before initiating a credit check, without collecting the full Aadhaar number.
+- **UPI / payment onboarding** — Prove identity for wallet or payment app registration while keeping personal details private.
+
+### Web3 & DeFi
+- **Sybil resistance** — Use the nullifier mechanism to ensure one-person-one-account on DAOs, airdrops, quadratic voting, and DeFi protocols — without linking on-chain identity to a real person.
+- **Proof-of-personhood** — Prove you are a unique human for governance, token claims, or reputation systems without revealing who you are.
+- **Privacy-preserving KYC for regulated DeFi** — Meet compliance requirements for permissioned DeFi pools while preserving user privacy through selective disclosure.
+
+### Healthcare
+- **Patient identity verification** — Verify a patient's identity and state of residence for insurance claims or telemedicine consultations without exposing their full Aadhaar details.
+- **Age-gated services** — Prove a patient is above a certain age for consent purposes without revealing their date of birth.
+
+### Government & Public Services
+- **Subsidy verification** — Prove eligibility (age, state, PIN code) for government schemes without centralizing personal data.
+- **Anonymous feedback systems** — Allow citizens to submit verified feedback on public services while remaining anonymous — the nullifier ensures one submission per person.
+- **Election & polling systems** — Verify voter eligibility (age, residency) without creating a linkable identity trail.
+
+### Education & EdTech
+- **Exam identity verification** — Verify a student's identity for online examinations without collecting and storing their Aadhaar data.
+- **Scholarship eligibility** — Prove age, state, or residency requirements for scholarship applications while keeping personal details private.
+
+### E-Commerce & Marketplaces
+- **Age verification** — Prove a buyer is above 18 for age-restricted products without sharing any other personal information.
+- **Seller verification** — Verify that marketplace sellers are real individuals with valid identity, without the platform storing their documents.
+
+### Insurance
+- **Policy issuance** — Verify identity and age for insurance underwriting without processing full Aadhaar data.
+- **Claims verification** — Prove the claimant is the policy holder using ZK proofs instead of document re-submission.
+
+### Human Resources
+- **Background verification** — Verify candidate identity during hiring without the employer ever seeing the raw Aadhaar document.
+- **Contractor onboarding** — Gig economy platforms can verify worker identity with minimal data collection.
+
 ## Packages
 
 | Package | Description | npm |
