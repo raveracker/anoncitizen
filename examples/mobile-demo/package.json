@@ -2,7 +2,7 @@
   "name": "@anoncitizen/mobile-demo",
   "private": true,
   "version": "0.0.0",
-  "main": "src/App.tsx",
+  "main": "src/index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
@@ -12,14 +12,14 @@
   "dependencies": {
     "@anoncitizen/react-native": "workspace:*",
     "@anoncitizen/core": "workspace:*",
-    "expo": "~53.0.0",
-    "expo-camera": "~17.0.0",
-    "expo-image-picker": "~17.0.0",
-    "react": "^19.0.0",
-    "react-native": "^0.79.0"
+    "expo": "~55.0.6",
+    "expo-camera": "~55.0.9",
+    "expo-image-picker": "~55.0.12",
+    "react": "19.2.0",
+    "react-native": "0.83.2"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0",
-    "typescript": "^5.8.0"
+    "@types/react": "~19.2.10",
+    "typescript": "~5.9.2"
   }
 }
