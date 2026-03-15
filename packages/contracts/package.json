@@ -1,6 +1,6 @@
 {
   "name": "@anoncitizen/contracts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Solidity verifier contracts for AnonCitizen ZK proofs",
   "main": "./artifacts/contracts/AnonCitizen.sol/AnonCitizen.json",
   "files": [
