@@ -42,11 +42,9 @@ packages/
   circuits/    — Circom 2.x ZK circuits
   core/        — TypeScript SDK (QR parsing, proof gen, verification)
   react/       — React hooks & components
-  react-native/ — Expo-compatible mobile SDK
   contracts/   — Solidity verifier + nullifier tracking
 examples/
   web-demo/    — Vite + React demo app
-  mobile-demo/ — Expo demo app
 tests/
   e2e/         — Playwright E2E tests
 docs/
