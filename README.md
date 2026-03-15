@@ -148,9 +148,9 @@ import { AnonCitizen } from "@anoncitizen/contracts/contracts/AnonCitizen.sol";
 
 ```
 QR Code → @anoncitizen/core → Circom Circuit → Groth16 Proof
-                                                    ↓
-                              Off-chain verify (snarkjs) ← @anoncitizen/react
-                              On-chain verify (Solidity) ← @anoncitizen/contracts
+                           ↓
+Off-chain verify (snarkjs) ← @anoncitizen/react
+On-chain verify (Solidity) ← @anoncitizen/contracts
 ```
 
 ## Development
