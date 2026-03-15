@@ -171,7 +171,7 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup details.
 pnpm changeset
 
 # 2. Apply version bumps to package.json files
-pnpm run version
+pnpm run version:bump
 
 # 3. Commit the version bumps and changelogs
 git add .
