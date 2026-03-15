@@ -10,7 +10,7 @@ jobs:
   deploy:
     name: Deploy to Polygon Amoy
     runs-on: ubuntu-latest
-    environment: amoy
+    environment: Dev
     steps:
       - uses: actions/checkout@v4
 
