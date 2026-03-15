@@ -1,29 +1,16 @@
-name: Deploy Contracts
+name: Deploy Contracts (Polygon Amoy)
 
 on:
   workflow_dispatch:
-    inputs:
-      network:
-        description: "Target network"
-        required: true
-        type: choice
-        options:
-          - amoy
-          - polygon
-      verify:
-        description: "Verify on Polygonscan after deploy"
-        required: false
-        type: boolean
-        default: true
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy to ${{ inputs.network }}
+    name: Deploy to Polygon Amoy
     runs-on: ubuntu-latest
-    environment: ${{ inputs.network }}
+    environment: amoy
     steps:
       - uses: actions/checkout@v4
 
@@ -45,7 +32,7 @@ jobs:
       - name: Deploy
         id: deploy
         run: |
-          OUTPUT=$(pnpm --filter @anoncitizen/contracts exec hardhat run scripts/deploy.ts --network ${{ inputs.network }})
+          OUTPUT=$(pnpm --filter @anoncitizen/contracts exec hardhat run scripts/deploy.ts --network amoy)
           echo "$OUTPUT"
           VERIFIER=$(echo "$OUTPUT" | grep "Groth16Verifier:" | awk '{print $2}')
           ANONCITIZEN=$(echo "$OUTPUT" | grep "AnonCitizen:" | awk '{print $2}')
@@ -53,32 +40,27 @@ jobs:
           echo "anoncitizen=$ANONCITIZEN" >> $GITHUB_OUTPUT
         env:
           AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
-          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
 
       - name: Verify Groth16Verifier on Polygonscan
-        if: inputs.verify
         run: |
           pnpm --filter @anoncitizen/contracts exec hardhat verify \
-            --network ${{ inputs.network }} ${{ steps.deploy.outputs.verifier }}
+            --network amoy ${{ steps.deploy.outputs.verifier }}
         env:
           AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
-          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
         continue-on-error: true
 
       - name: Verify AnonCitizen on Polygonscan
-        if: inputs.verify
         run: |
           pnpm --filter @anoncitizen/contracts exec hardhat verify \
-            --network ${{ inputs.network }} \
+            --network amoy \
             ${{ steps.deploy.outputs.anoncitizen }} \
             ${{ steps.deploy.outputs.verifier }}
         env:
           AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
-          POLYGON_RPC_URL: ${{ secrets.POLYGON_RPC_URL }}
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
         continue-on-error: true
@@ -92,4 +74,4 @@ jobs:
           echo "| Groth16Verifier | \`${{ steps.deploy.outputs.verifier }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| AnonCitizen | \`${{ steps.deploy.outputs.anoncitizen }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Network:** ${{ inputs.network }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Network:** Polygon Amoy" >> $GITHUB_STEP_SUMMARY

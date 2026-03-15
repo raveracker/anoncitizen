@@ -10,25 +10,33 @@ permissions:
   id-token: write
 
 jobs:
+  # Step 1: Lint, typecheck, test all packages
   ci:
-    name: CI
+    name: "Step 1: CI"
     uses: ./.github/workflows/ci.yml
 
-  publish:
-    name: Publish to npm
-    uses: ./.github/workflows/publish.yml
-    needs: [ci]
-    secrets: inherit
-
+  # Step 2: Deploy contracts to Polygon Amoy
   deploy-testnet:
-    name: Deploy Testnet
+    name: "Step 2: Deploy Testnet"
+    needs: [ci]
+    if: "!contains(github.ref, 'alpha')"
     uses: ./.github/workflows/deploy-testnet.yml
-    needs: [publish]
-    if: startsWith(github.ref, 'refs/tags/v') && !contains(github.ref, 'alpha')
     secrets: inherit
 
+  # Step 3: Publish all packages to npm
+  publish:
+    name: "Step 3: Publish to npm"
+    needs: [ci, deploy-testnet]
+    if: |
+      always() &&
+      needs.ci.result == 'success' &&
+      (needs.deploy-testnet.result == 'success' || needs.deploy-testnet.result == 'skipped')
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit
+
+  # Step 4: Create GitHub Release
   github-release:
-    name: GitHub Release
+    name: "Step 4: GitHub Release"
     runs-on: ubuntu-latest
     needs: [publish]
     steps:

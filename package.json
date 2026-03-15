@@ -11,7 +11,7 @@
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "changeset": "changeset",
-    "version": "changeset version",
+    "version:bump": "pnpm changeset version",
     "release": "pnpm build && changeset publish"
   },
   "devDependencies": {
