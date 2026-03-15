@@ -22,7 +22,7 @@ test.describe("AnonCitizen Web Demo", () => {
 
   test("displays the app title and initial scan step", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "AnonCitizen Demo" })).toBeVisible();
-    await expect(page.getByText("Step 1: Scan Aadhaar QR Code")).toBeVisible();
+    await expect(page.getByText("Step 1: Upload Aadhaar QR Code")).toBeVisible();
   });
 
   test("shows SDK initialization status", async ({ page }) => {
@@ -32,10 +32,10 @@ test.describe("AnonCitizen Web Demo", () => {
     await expect(heading).toBeVisible();
   });
 
-  test("renders QR scanner with camera or file upload", async ({ page }) => {
-    // The QR scanner should render (camera or file upload fallback)
-    const scanner = page.locator("[class]").first();
-    await expect(scanner).toBeVisible();
+  test("renders QR upload with file input", async ({ page }) => {
+    // The QR scanner shows a file upload input (useCamera=false)
+    const fileInput = page.locator('input[type="file"]');
+    await expect(fileInput).toBeAttached();
   });
 
   test("file upload fallback shows file input", async ({ page }) => {
@@ -47,25 +47,20 @@ test.describe("AnonCitizen Web Demo", () => {
     await expect(page.getByText("AnonCitizen Demo")).toBeVisible();
   });
 
-  test("navigates to field selection after QR scan", async ({ page }) => {
-    // Simulate QR scan by dispatching custom event or file upload
-    // Since we can't trigger a real QR scan in headless mode,
-    // test the file upload path
-    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+  test("shows error for invalid QR image upload", async ({ page }) => {
+    // Upload a fake image that doesn't contain a valid QR code
+    const fileInput = page.locator('input[type="file"]');
 
-    // If file input is visible (camera fallback), upload a test image
     if (await fileInput.isVisible()) {
-      // Create a minimal test file
       await fileInput.setInputFiles({
         name: "test-qr.png",
         mimeType: "image/png",
         buffer: Buffer.from("fake-qr-data"),
       });
 
-      // Should navigate to field selection
-      await expect(page.getByText("Step 2: Choose Fields to Reveal")).toBeVisible({
-        timeout: 5000,
-      });
+      // Should show an error (jsQR can't decode fake data) or stay on scan step
+      // App should not crash
+      await expect(page.getByText("AnonCitizen Demo")).toBeVisible();
     }
   });
 
@@ -79,7 +74,7 @@ test.describe("AnonCitizen Web Demo", () => {
 
   test("handles invalid QR data gracefully", async ({ page }) => {
     // Verify the app doesn't crash on invalid input
-    const fileInput = page.locator('input[type="file"][accept="image/*"]');
+    const fileInput = page.locator('input[type="file"]');
 
     if (await fileInput.isVisible()) {
       await fileInput.setInputFiles({

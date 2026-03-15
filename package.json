@@ -17,6 +17,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.58.2",
     "@types/qrcode": "^1.5.6",
     "eslint": "^9.0.0",
     "jsqr": "^1.4.0",
