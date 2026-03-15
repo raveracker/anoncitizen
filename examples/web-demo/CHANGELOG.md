@@ -1,5 +1,17 @@
 # @anoncitizen/web-demo
 
+## 1.2.0
+
+### Minor Changes
+
+- Workflow Fixes
+
+### Patch Changes
+
+- Updated dependencies
+  - @anoncitizen/core@1.2.0
+  - @anoncitizen/react@1.2.0
+
 ## 1.1.0
 
 ### Minor Changes
