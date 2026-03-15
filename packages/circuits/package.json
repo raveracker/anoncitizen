@@ -1,6 +1,6 @@
 {
   "name": "@anoncitizen/circuits",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Circom 2.x circuits for AnonCitizen Aadhaar ZK verification",
   "scripts": {

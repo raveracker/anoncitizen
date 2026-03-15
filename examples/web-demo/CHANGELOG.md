@@ -1,5 +1,17 @@
 # @anoncitizen/web-demo
 
+## 1.3.0
+
+### Minor Changes
+
+- Remove Hardcoded Certificate in Demo and Referenced Core
+
+### Patch Changes
+
+- Updated dependencies
+  - @anoncitizen/core@1.3.0
+  - @anoncitizen/react@1.3.0
+
 ## 1.2.0
 
 ### Minor Changes
