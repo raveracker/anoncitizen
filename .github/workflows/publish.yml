@@ -1,0 +1,57 @@
+name: Publish to npm
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish Packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm turbo build
+
+      - name: Run all tests
+        run: pnpm turbo test
+
+      - name: Publish @anoncitizen/core
+        run: pnpm --filter @anoncitizen/core publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @anoncitizen/react
+        run: pnpm --filter @anoncitizen/react publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @anoncitizen/contracts
+        run: pnpm --filter @anoncitizen/contracts publish --no-git-checks --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish Summary
+        run: |
+          echo "## npm Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Package | Version |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| @anoncitizen/core | $(node -p "require('./packages/core/package.json').version") |" >> $GITHUB_STEP_SUMMARY
+          echo "| @anoncitizen/react | $(node -p "require('./packages/react/package.json').version") |" >> $GITHUB_STEP_SUMMARY
+          echo "| @anoncitizen/contracts | $(node -p "require('./packages/contracts/package.json').version") |" >> $GITHUB_STEP_SUMMARY

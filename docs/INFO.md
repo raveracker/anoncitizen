@@ -31,7 +31,6 @@ The project will include the following packages:
 - `@anoncitizen/core`
 - `@anoncitizen/react` (supports the latest version of React)
 - `@anoncitizen/contracts`
-- `@anoncitizen/react-native` (supports the latest version of Expo)
 
 ## How It Works
 

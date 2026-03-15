@@ -24,23 +24,21 @@
 - [ ] `pnpm turbo typecheck` — no type errors
 - [ ] Contract tests pass with real verification keys
 - [ ] Manual test: web demo end-to-end flow
-- [ ] Manual test: mobile demo end-to-end flow
 
 ## Publish
 
 - [ ] Tag release: `git tag v0.x.0`
 - [ ] Push tag: `git push origin v0.x.0`
 - [ ] Verify GitHub Actions release workflow triggers
-- [ ] Verify all 4 packages published to npm:
+- [ ] Verify all 3 packages published to npm:
   - [ ] `@anoncitizen/core`
   - [ ] `@anoncitizen/react`
-  - [ ] `@anoncitizen/react-native`
   - [ ] `@anoncitizen/contracts`
 - [ ] Verify npm packages install correctly: `npm install @anoncitizen/core`
 
 ## Post-release
 
 - [ ] Create GitHub Release with notes
-- [ ] Deploy contracts to Sepolia testnet (if not auto-deployed)
+- [ ] Deploy contracts to Polygon Amoy testnet (if not auto-deployed)
 - [ ] Record deployed contract addresses in README
 - [ ] Announce release

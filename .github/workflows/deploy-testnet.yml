@@ -1,0 +1,68 @@
+name: Deploy Testnet (Polygon Amoy)
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Polygon Amoy
+    runs-on: ubuntu-latest
+    environment: amoy
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Compile contracts
+        run: pnpm --filter @anoncitizen/contracts build
+
+      - name: Run contract tests
+        run: pnpm --filter @anoncitizen/contracts test
+
+      - name: Deploy to Polygon Amoy
+        id: deploy
+        run: |
+          OUTPUT=$(pnpm --filter @anoncitizen/contracts exec hardhat run scripts/deploy.ts --network amoy)
+          echo "$OUTPUT"
+          VERIFIER=$(echo "$OUTPUT" | grep "Groth16Verifier:" | awk '{print $2}')
+          ANONCITIZEN=$(echo "$OUTPUT" | grep "AnonCitizen:" | awk '{print $2}')
+          echo "verifier=$VERIFIER" >> $GITHUB_OUTPUT
+          echo "anoncitizen=$ANONCITIZEN" >> $GITHUB_OUTPUT
+        env:
+          AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+
+      - name: Verify on Polygonscan
+        run: |
+          pnpm --filter @anoncitizen/contracts exec hardhat verify \
+            --network amoy ${{ steps.deploy.outputs.verifier }} || true
+          pnpm --filter @anoncitizen/contracts exec hardhat verify \
+            --network amoy ${{ steps.deploy.outputs.anoncitizen }} \
+            ${{ steps.deploy.outputs.verifier }} || true
+        env:
+          AMOY_RPC_URL: ${{ secrets.AMOY_RPC_URL }}
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+
+      - name: Deployment Summary
+        run: |
+          echo "## Testnet Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Contract | Address |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Groth16Verifier | \`${{ steps.deploy.outputs.verifier }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| AnonCitizen | \`${{ steps.deploy.outputs.anoncitizen }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Network:** Polygon Amoy" >> $GITHUB_STEP_SUMMARY

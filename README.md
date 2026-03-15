@@ -10,7 +10,6 @@ Prove ownership of an Aadhaar document without exposing personal information. Ve
 |---|---|---|
 | [`@anoncitizen/core`](./packages/core/) | TypeScript SDK — QR parsing, proof generation, verification | [![npm](https://img.shields.io/npm/v/@anoncitizen/core)](https://www.npmjs.com/package/@anoncitizen/core) |
 | [`@anoncitizen/react`](./packages/react/) | React hooks & components | [![npm](https://img.shields.io/npm/v/@anoncitizen/react)](https://www.npmjs.com/package/@anoncitizen/react) |
-| [`@anoncitizen/react-native`](./packages/react-native/) | Expo-compatible mobile SDK | [![npm](https://img.shields.io/npm/v/@anoncitizen/react-native)](https://www.npmjs.com/package/@anoncitizen/react-native) |
 | [`@anoncitizen/contracts`](./packages/contracts/) | Solidity verifier + nullifier tracking | [![npm](https://img.shields.io/npm/v/@anoncitizen/contracts)](https://www.npmjs.com/package/@anoncitizen/contracts) |
 
 ## Quick Start
