@@ -1,5 +1,11 @@
 # @anoncitizen/circuits
 
+## 1.3.0
+
+### Minor Changes
+
+- Remove Hardcoded Certificate in Demo and Referenced Core
+
 ## 1.2.0
 
 ### Minor Changes
